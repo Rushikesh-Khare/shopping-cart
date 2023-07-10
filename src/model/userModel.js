@@ -3,25 +3,79 @@ const objectId = mongoose.Schema.Types.ObjectId;
 const { Schema, model } = mongoose;
 
 const userSchema = new Schema({
-    fname: { type: String, requrired: true, trim: true},
-    lname: { type: String, requrired: true, trim: true},
-    email: { type: String, requrired: true, unique: true, trim: true},
-    profileImage: {type: String, requrired: true, trim: true},
-    phone:{ type: String, requrired: true, unique: true, trim: true},
-    password: {type: String, requrired: true, trim: true},
-    address: {
-        shipping: {
-            street: {type: String, requrired: true, trim: true},
-            city: {type: String, requrired: true, trim: true},
-            pincode: {type: Number, requrired: true, trim: true},
-        },
-        billing: {
-            street: {type: String, requrired: true, trim: true},
-            city: {type: String, requrired: true, trim: true},
-            pincode: {type: Number, requrired: true, trim: true},
+    fname: {
+        type: String,
+        required: true
+    },
+    lname: {
+        type: String,
+        required: true
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: (value) => {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(value);
+            },
+            message: 'Invalid email format'
         }
     },
-}, {timestamps: true});
+    profileImage: {
+        type: String,
+        required: true
+    },
+    phone: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: {
+            validator: (value) => {
+                const mobileRegex = /^[6-9]\d{9}$/;
+                return mobileRegex.test(value);
+            },
+            message: 'Invalid Indian mobile number format'
+        }
+    },
+    password: {
+        type: String,
+        required: true,
+        minlength: 8,
+      
+    },
+    address: {
+        shipping: {
+            street: {
+                type: String,
+                required: true
+            },
+            city: {
+                type: String,
+                required: true
+            },
+            pincode: {
+                type: Number,
+                required: true
+            }
+        },
+        billing: {
+            street: {
+                type: String,
+                required: true
+            },
+            city: {
+                type: String,
+                required: true
+            },
+            pincode: {
+                type: Number,
+                required: true
+            }
+        }
+    }
+}, { timestamps: true });
 
 module.exports = model('User', userSchema);
 

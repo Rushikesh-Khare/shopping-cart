@@ -71,7 +71,8 @@ const userRegister = async (req, res) => {
         data.password = hashedPassword;
         console.log("line no 64");
         //aws s3
-        let files = req.files;
+        const files = req.files;
+        console.log(files);
         if (isValid(files)) {
             if (files.length > 1) {
                 return res.status(400).send({ status: false, message: "You can't enter more than one file for create " });
@@ -82,7 +83,7 @@ const userRegister = async (req, res) => {
         } else {
             return res.status(400).send({ status: false, message: "Profile Image is Mandatory" });
         }
-        console.log("line79");
+
         //check whether phone is already exist or not
         const findUser = await User.findOne({ $or: [{ phone: phone }, { email: email }] });
         if (findUser) {

@@ -5,9 +5,21 @@ const isValid = function (value) {
     return true;
 };
 
-const isValidEmail = function(value) {
+const isBoolean = function(value) {
+    return /^(true|false)$/i.test(value);
+}
+
+const isValidPrice = function (value) {
+    return /^\d+(\.\d+)?$/.test(value);
+}
+
+const isValidNumber = function (value) {
+    return /^\d+$/.test(value);
+}
+
+const isValidEmail = function (value) {
     return /^[\w\.-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)*\.[a-zA-Z]{2,}$/
-    .test(value);
+        .test(value);
 }
 
 const isValidMobile = function (input) {
@@ -24,4 +36,4 @@ const isValidPincode = function (input) {
     return pincodeRegex.test(input);
 };
 
-module.exports = {isValid, isValidEmail, isValidMobile, isValidPassword, isValidPincode};
+module.exports = { isValid, isValidEmail, isValidMobile, isValidPassword, isValidPincode, isValidPrice, isValidNumber, isBoolean};
