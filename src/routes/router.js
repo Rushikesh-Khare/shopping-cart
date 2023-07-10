@@ -25,7 +25,7 @@ router.delete('/users/:userId/cart', authentication, authorization, deleteCart);
 
 //==================================== cart ============================================//
 
-router.post('/users/:userId/orders', createModel);
-router.put('/users/:userId/orders', updateModel);
+router.post('/users/:userId/orders', authentication, authorization, createModel);
+router.put('/users/:userId/orders', authentication, authorization, updateModel);
 
 module.exports = router;
