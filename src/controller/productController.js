@@ -67,72 +67,114 @@ const createProduct = async function (req, res) {
         let files = req.files;
         if (isValid(files)) {
             if (files.length > 1) {
-                return res.status(400).send({ status: false, message: "You can't enter more than one file for create " });
+                return res.status(400).send({
+                    status: false,
+                    message: "You can't enter more than one file for create "
+                });
             }
 
             let uploadFileURL = await uploadFile(files[0]);
             data.productImage = uploadFileURL;
         } else {
-            return res.status(400).send({ status: false, message: "Profile Image is Mandatory" });
+            return res.status(400).send({
+                status: false,
+                message: "Profile Image is Mandatory"
+            });
         }
         //check title is already exist or not
-        const findTitleData = await Product.findOne({ title: title });
+        const findTitleData = await Product.findOne({
+            title: title
+        });
         if (findTitleData) {
             return res.status(400).send({
                 status: false,
                 message: "title is already exist "
             });
         }
-        console.log("line 81");
         const createData = await Product.create(data);
         // console.log(createData);
         return res.status(201).send({
             status: true,
-            message: "success",
+            message: "Success",
             data: createData
         });
-        console.log("line 88");
+
 
     } catch (error) {
-        return res.status(500).send({ status: false, message: error.message });
+        return res.status(500).send({
+            status: false,
+            message: error.message
+        });
     }
 }
 
 //==================================== get all product ============================================//
 const getProduct = async function (req, res) {
     try {
-        const { size, name, priceGreaterThan, pricelessThan, priceSort } = req.query;
-        console.log(req.query);
+        const { size, name, priceGreaterThan, priceLessThan, priceSort } = req.query;
+        // console.log(req.query);
+        
         const filter = { isDeleted: false };
-        filter.availableSizes = size;
+        if (size) {
+            if(!isValid(size)) {
+                return res.status(400).send({
+                    status: false,
+                    message: "invalid size input"
+                });
+            }
+            filter.availableSizes = size;
+        }
+
         if (name) {
+            if(!isValid(name)) {
+                return res.status(400).send({
+                    status: false,
+                    message: "invalid size input"
+                });
+            }
             filter.title = {
                 $regex: name,
                 $options: "i"
+
             };
         }
-        if (priceGreaterThan) {
+        if (priceGreaterThan && priceLessThan) {
+            filter.price = {
+                $gt: Number(priceGreaterThan),
+                $lt: Number(priceLessThan)
+            };
+        } else if (priceGreaterThan) {
             filter.price = { $gt: Number(priceGreaterThan) };
+        } else if (priceLessThan) {
+            filter.price = { $lt: Number(priceLessThan) };
         }
 
-        if (pricelessThan) {
-            filter.price = { $gt: Number(pricelessThan) };
-        }
+
 
         const sortData = {};
         if (priceSort) {
             sortData.price = Number(priceSort);
         }
-
+        console.log(filter);
         const getProductsData = await Product.find(filter).sort(sortData);
-
+        // console.log(getProductsData);
         if (getProductsData.length === 0) {
-            return res.status(400).send({ status: false, message: "data does not found" });
+            return res.status(400).send({
+                status: false,
+                message: "data does not found"
+            });
         }
-        return res.status(200).send({ status: true, message: "success", data: getProductsData });
+        return res.status(200).send({
+            status: true,
+            message: "Success",
+            data: getProductsData
+        });
 
     } catch (error) {
-        return res.stauts(500).send({ status: false, message: error.message });
+        return res.status(500).send({
+            status: false,
+            message: error.message
+        });
     }
 }
 
@@ -142,19 +184,38 @@ const getProductById = async function (req, res) {
         const productId = req.params.productId;
         console.log(typeof productId);
         if (!isValid(productId)) {
-            return res.status(400).send({ status: false, message: "invalid product id" });
+            return res.status(400).send({
+                status: false,
+                message: "invalid product id"
+            });
         }
         if (!isValidObjectId(productId)) {
-            return res.status(400).send({ status: false, message: "invalid product object id" });
+            return res.status(400).send({
+                status: false,
+                message: "invalid product object id"
+            });
 
         }
-        findData = await Product.findById(productId);
+        findData = await Product.findOne({
+            _id: productId,
+
+        });
         if (!findData) {
-            return res.status(404).send({ status: false, message: "data does not found" });
+            return res.status(404).send({
+                status: false,
+                message: "data does not found"
+            });
         }
-        return res.status(200).send({ status: true, message: "success", data: findData });
+        return res.status(200).send({ 
+            status: true, 
+            message: "Success", 
+            data: findData 
+        });
     } catch (error) {
-        return res.status(500).send({ status: false, message: error.message });
+        return res.status(500).send({ 
+            status: false, 
+            message: error.message 
+        });
     }
 }
 
@@ -177,7 +238,10 @@ const updateProduct = async function (req, res) {
             });
         }
         //check is there any data exist or not and it is not deleted
-        const findData = await Product.findOne({ _id: productId }, { isDeleted: false });
+        const findData = await Product.findOne(
+            { _id: productId },
+            { isDeleted: false }
+        );
         if (!findData) {
             return res.status(400).send({
                 status: false,
@@ -189,12 +253,18 @@ const updateProduct = async function (req, res) {
         const updateData = {};
         if (title) {
             if (!isValid(title)) {
-                return res.status(400).send({ status: false, message: "invalid title" });
+                return res.status(400).send({ 
+                    status: false, 
+                    message: "invalid title" 
+                });
             }
             //check title is unique or not 
             const findTitleData = await Product.findOne({ title: title });
             if (findTitleData) {
-                return res.status(400).send({ status: false, message: "title is already exist " });
+                return res.status(400).send({ 
+                    status: false, 
+                    message: "title is already exist " 
+                });
             }
             updateData.title = title;
 
@@ -202,28 +272,40 @@ const updateProduct = async function (req, res) {
 
         if (description) {
             if (!isValid(description)) {
-                return res.status(400).send({ status: false, message: "invalid description" });
+                return res.status(400).send({ 
+                    status: false, 
+                    message: "invalid description" 
+                });
             }
             updateData.description = description;
         }
 
         if (currencyId) {
             if (!isValid(currencyId)) {
-                return res.status(400).send({ status: false, message: "invalid currencyId" });
+                return res.status(400).send({ 
+                    status: false, 
+                    message: "invalid currencyId" 
+                });
             }
             updateData.currencyId = currencyId;
         }
 
         if (currencyFormat) {
             if (!isValid(currencyFormat)) {
-                return res.status(400).send({ status: false, message: "invalid currencyFormat" });
+                return res.status(400).send({ 
+                    status: false, 
+                    message: "invalid currencyFormat" 
+                });
             }
             updateData.currencyFormat = currencyFormat;
         }
 
         if (price) {
             if (!isValidPrice(price)) {
-                return res.status(400).send({ status: false, message: "price should be number" });
+                return res.status(400).send({ 
+                    status: false, 
+                    message: "price should be number" 
+                });
 
             }
             updateData.price = price;
@@ -243,7 +325,10 @@ const updateProduct = async function (req, res) {
 
         if (style) {
             if (!isValid(style)) {
-                return res.status(400).send({ status: false, message: "invali style " });
+                return res.status(400).send({ 
+                    status: false, 
+                    message: "invali style" 
+                });
             }
             updateData.style = style;
         }
@@ -251,12 +336,18 @@ const updateProduct = async function (req, res) {
         if (availableSizes) {
             const arr = JSON.parse(availableSizes);
             if (typeof arr !== 'object' || arr.lenght === 0) {
-                return res.status(400).send({ status: false, message: "available sizes is not valid" });
+                return res.status(400).send({ 
+                    status: false, 
+                    message: "available sizes is not valid" 
+                });
             }
             const productAvailableSize = ["S", "XS", "M", "X", "L", "XXL", "XL"];
             for (let i = 0; i < arr.lenght; i++) {
                 if (!productAvailableSize.includes(arr[i])) {
-                    return res.status(400).send({ status: false, message: "please enter valid size parameter" });
+                    return res.status(400).send({ 
+                        status: false, 
+                        message: "please enter valid size parameter" 
+                    });
                 }
             }
             updateData.availableSizes = arr;
@@ -264,7 +355,10 @@ const updateProduct = async function (req, res) {
 
         if (installments) {
             if (!isValidNumber(installments)) {
-                return res.status(400).send({ status: false, message: "invalid installment input" });
+                return res.status(400).send({ 
+                    status: false, 
+                    message: "invalid installment input" 
+                });
             }
             updateData.installments = installments
         }
@@ -278,9 +372,16 @@ const updateProduct = async function (req, res) {
         }
 
         const updateProductData = await Product.findByIdAndUpdate(productId, updateData, { new: true });
-        return res.status(200).send({ status: true, message: "success", data: updateProductData });
+        return res.status(200).send({ 
+            status: true, 
+            message: "success", 
+            data: updateProductData 
+        });
     } catch (error) {
-        return res.stauts(500).send({ status: false, message: error.message });
+        return res.stauts(500).send({ 
+            status: false, 
+            message: error.message 
+        });
     }
 }
 
@@ -288,7 +389,7 @@ const updateProduct = async function (req, res) {
 const deleteProduct = async function (req, res) {
     try {
         const productId = req.params.productId;
-        console.log("line 291");
+      
         if (!isValidObjectId(productId)) {
             return res.status(400).send({
                 status: false,
@@ -301,17 +402,31 @@ const deleteProduct = async function (req, res) {
             isDeleted: false
         });
         if (!isDataExist) {
-            return res.status(404).send({ status: false, message: "data does not found" });
+            return res.status(404).send({ 
+                status: false, 
+                message: "data does not found" 
+            });
         }
-        console.log("line 300");
+   
         const deleteData = {};
         deleteData.isDeleted = true;
         deleteData.deletedAt = new Date();
 
-        const deleteProductData = await Product.findOneAndUpdate({ _id: productId }, deleteData, { new: true });
-        return res.status(200).send({ status: true, message: "success", data: deleteProductData });
+        const deleteProductData = await Product.findOneAndUpdate(
+            { _id: productId }, 
+            deleteData, 
+            { new: true }
+            );
+        return res.status(200).send({ 
+            status: true, 
+            message: "Success", 
+            data: deleteProductData 
+        });
     } catch (error) {
-        return res.status(500).send({ status: false, message: error.message });
+        return res.status(500).send({ 
+            status: false, 
+            message: error.message 
+        });
     }
 }
 
